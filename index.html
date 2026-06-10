@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>接口信息录入模板</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    margin: 0;
+    padding: 24px;
+    background: #f0f2f5;
+    color: #2c3e50;
+    font-size: 14px;
+  }
+
+  /* ============ 整体容器 ============ */
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* ============ 顶部工具栏 ============ */
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    padding: 16px 24px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 20px;
+  }
+  .toolbar .title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2d3d;
+  }
+  .toolbar .title::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    background: linear-gradient(180deg, #2d8cf0, #19be6b);
+    border-radius: 2px;
+  }
+  .toolbar .actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  /* ============ 按钮统一风格 ============ */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 34px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    user-select: none;
+  }
+  .btn-primary { background: #19be6b; color: #fff; }
+  .btn-primary:hover { background: #13a257; box-shadow: 0 4px 10px rgba(25, 190, 107, 0.35); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-secondary { background: #2d8cf0; color: #fff; }
+  .btn-secondary:hover { background: #1e6dca; box-shadow: 0 4px 10px rgba(45, 140, 240, 0.35); transform: translateY(-1px); }
+  .btn-secondary:active { transform: translateY(0); }
+
+  .btn-danger { background: #ed4014; color: #fff; }
+  .btn-danger:hover { background: #cf2e0a; box-shadow: 0 4px 10px rgba(237, 64, 20, 0.35); transform: translateY(-1px); }
+  .btn-danger:active { transform: translateY(0); }
+
+  .btn-ghost {
+    background: transparent;
+    color: #ed4014;
+    border: 1px solid #ed4014;
+    box-shadow: none;
+    height: 26px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+  .btn-ghost:hover { background: #ed4014; color: #fff; box-shadow: 0 2px 6px rgba(237, 64, 20, 0.3); }
+
+  /* ============ 卡片 ============ */
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fafbfc;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2d3d;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: #2d8cf0;
+    border-radius: 50%;
+  }
+  .card-title .badge {
+    font-size: 12px;
+    color: #808695;
+    font-weight: 400;
+  }
+  .card-body { padding: 20px; }
+
+  /* ============ 表单网格（基础信息） ============ */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px 24px;
+  }
+  .form-item { display: flex; flex-direction: column; }
+  .form-item label {
+    font-size: 13px;
+    color: #5e6d82;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .form-item label .req { color: #ed4014; margin-right: 2px; }
+
+  /* ============ 统一输入控件 ============ */
+  .ctrl {
+    width: 100%;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #dcdee2;
+    border-radius: 6px;
+    background: #fff;
+    color: #2c3e50;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  .ctrl:hover { border-color: #c0c4cc; }
+  .ctrl:focus { border-color: #2d8cf0; box-shadow: 0 0 0 3px rgba(45, 140, 240, 0.15); }
+  select.ctrl { appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path fill='%23999' d='M2 4l4 4 4-4z'/></svg>"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+  textarea.ctrl {
+    height: auto;
+    min-height: 110px;
+    padding: 10px 12px;
+    line-height: 1.6;
+    resize: vertical;
+  }
+  .json-area {
+    font-family: Consolas, "Courier New", monospace;
+    background: #f8f9fb;
+    border-style: dashed;
+  }
+  .json-area:focus { background: #fff; border-style: solid; }
+
+  /* ============ 字段表（请求/响应） ============ */
+  .field-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+  }
+  .field-table th {
+    background: #f5f7fa;
+    color: #5e6d82;
+    font-weight: 600;
+    font-size: 13px;
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e8eaec;
+  }
+  .field-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+  }
+  .field-table tr:last-child td { border-bottom: none; }
+  .field-table tr:hover td { background: #fafbfc; }
+  .field-table .col-name { width: 26%; }
+  .field-table .col-type { width: 14%; }
+  .field-table .col-req  { width: 12%; }
+  .field-table .col-desc { width: 38%; }
+  .field-table .col-op   { width: 10%; text-align: right; padding-right: 14px; }
+  .field-table .ctrl { height: 32px; padding: 0 8px; font-size: 13px; }
+
+  .add-row {
+    text-align: center;
+    padding: 10px;
+    color: #19be6b;
+    font-size: 13px;
+    cursor: pointer;
+    border-top: 1px dashed #e8eaec;
+    transition: background 0.2s;
+  }
+  .add-row:hover { background: #f0fff5; color: #13a257; }
+
+  .sample-wrap {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: #f8f9fb;
+    border: 1px dashed #dcdee2;
+    border-radius: 8px;
+  }
+  .sample-wrap .label {
+    font-size: 13px;
+    color: #5e6d82;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  /* ============ 提示信息 ============ */
+  .hint {
+    color: #808695;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- 顶部工具栏 -->
+  <div class="toolbar">
+    <div class="title">接口信息录入模板</div>
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="exportToExcel()">导出 Excel</button>
+    </div>
+  </div>
+
+  <!-- 卡片 1：基本信息 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">基本信息 <span class="badge">必填项请用 * 标记</span></div>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="form-item">
+          <label><span class="req">*</span>接口名称</label>
+          <input class="ctrl" type="text" id="apiName" placeholder="例如：用户登录" />
+        </div>
+        <div class="form-item">
+          <label>说明</label>
+          <input class="ctrl" type="text" id="apiDesc" placeholder="接口用途简要说明" />
+        </div>
+        <div class="form-item">
+          <label>备注</label>
+          <input class="ctrl" type="text" id="apiRemark" placeholder="补充说明，如调用频率限制" />
+        </div>
+        <div class="form-item">
+          <label><span class="req">*</span>接口地址</label>
+          <input class="ctrl" type="text" id="apiUrl" placeholder="/api/v1/user/login" />
+        </div>
+        <div class="form-item">
+          <label>接口传递方向</label>
+          <select class="ctrl" id="apiDirection">
+            <option value="">请选择</option>
+            <option value="请求">请求</option>
+            <option value="响应">响应</option>
+            <option value="双向">双向</option>
+          </select>
+        </div>
+        <div class="form-item">
+          <label>接口调用方式</label>
+          <select class="ctrl" id="apiMethod">
+            <option value="">请选择</option>
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+            <option value="PATCH">PATCH</option>
+          </select>
+        </div>
+        <div class="form-item">
+          <label>接口数据格式</label>
+          <input class="ctrl" type="text" value="JSON" readonly />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 卡片 2：请求参数 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">请求参数 <span class="badge">字段名 / 类型 / 是否必填 / 描述</span></div>
+    </div>
+    <div class="card-body">
+      <table class="field-table" id="requestFields">
+        <colgroup>
+          <col class="col-name" />
+          <col class="col-type" />
+          <col class="col-req" />
+          <col class="col-desc" />
+          <col class="col-op" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>字段名称</th>
+            <th>类型</th>
+            <th>是否必填</th>
+            <th>描述</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><input class="ctrl" type="text" placeholder="username" /></td><td><input class="ctrl" type="text" placeholder="String" /></td><td><input class="ctrl" type="text" placeholder="是" /></td><td><input class="ctrl" type="text" placeholder="用户账号" /></td><td><button class="btn btn-ghost" onclick="removeRow(this)">删除</button></td></tr>
+          <tr><td><input class="ctrl" type="text" /></td><td><input class="ctrl" type="text" /></td><td><input class="ctrl" type="text" /></td><td><input class="ctrl" type="text" /></td><td><button class="btn btn-ghost" onclick="removeRow(this)">删除</button></td></tr>
+          <tr><td><input class="ctrl" type="text" /></td><td><input class="ctrl" type="text" /></td><td><input class="ctrl" type="text" /></td><td><input class="ctrl" type="text" /></td><td><button class="btn btn-ghost" onclick="removeRow(this)">删除</button></td></tr>
+        </tbody>
+      </table>
+      <div class="add-row" onclick="addFieldRow('requestFields')">+ 点击添加一行</div>
+
+      <div class="sample-wrap">
+        <div class="label">请求样例（JSON）</div>
+        <textarea class="ctrl json-area" id="requestSample">{
+  "username": "admin",
+  "password": "123456"
+}</textarea>
+        <div class="hint">支持任意合法的 JSON 结构</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 卡片 3：响应参数 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">响应参数 <span class="badge">字段名 / 类型 / 是否必填 / 描述</span></div>
+    </div>
+    <div class="card-body">
+      <table class="field-table" id="responseFields">
+        <colgroup>
+          <col class="col-name" />
+          <col class="col-type" />
+          <col class="col-req" />
+          <col class="col-desc" />
+          <col class="col-op" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>字段名称</th>
+            <th>类型</th>
+            <th>是否必填</th>
+            <th>描述</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><input class="ctrl" type="text" placeholder="code" /></td><td><input class="ctrl" type="text" placeholder="Integer" /></td><td><input class="ctrl" type="text" placeholder="是" /></td><td><input class="ctrl" type="text" placeholder="返回码，0 表示成功" /></td><td><button class="btn btn-ghost" onclick="removeRow(this)">删除</button></td></tr>
+          <tr><td><input class="ctrl" type="text" placeholder="msg" /></td><td><input class="ctrl" type="text" placeholder="String" /></td><td><input class="ctrl" type="text" placeholder="是" /></td><td><input class="ctrl" type="text" placeholder="提示信息" /></td><td><button class="btn btn-ghost" onclick="removeRow(this)">删除</button></td></tr>
+          <tr><td><input class="ctrl" type="text" placeholder="data" /></td><td><input class="ctrl" type="text" placeholder="Object" /></td><td><input class="ctrl" type="text" placeholder="否" /></td><td><input class="ctrl" type="text" placeholder="业务数据" /></td><td><button class="btn btn-ghost" onclick="removeRow(this)">删除</button></td></tr>
+        </tbody>
+      </table>
+      <div class="add-row" onclick="addFieldRow('responseFields')">+ 点击添加一行</div>
+
+      <div class="sample-wrap">
+        <div class="label">响应样例（JSON）</div>
+        <textarea class="ctrl json-area" id="responseSample">{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "userId": 10001,
+    "token": "xxxxxx"
+  }
+}</textarea>
+        <div class="hint">支持任意合法的 JSON 结构</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // 动态添加字段行
+  function addFieldRow(tableId) {
+    const tbody = document.querySelector('#' + tableId + ' tbody');
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><input class="ctrl" type="text" /></td>' +
+      '<td><input class="ctrl" type="text" /></td>' +
+      '<td><input class="ctrl" type="text" /></td>' +
+      '<td><input class="ctrl" type="text" /></td>' +
+      '<td><button class="btn btn-ghost" onclick="removeRow(this)">删除</button></td>';
+    tbody.appendChild(tr);
+  }
+
+  // 删除字段行（至少保留一行）
+  function removeRow(btn) {
+    const tr = btn.closest('tr');
+    const tbody = tr.parentElement;
+    if (tbody.children.length <= 1) {
+      alert('至少需要保留一行');
+      return;
+    }
+    tr.remove();
+  }
+
+  // 收集子表数据
+  function collectFields(tableId) {
+    const rows = document.querySelectorAll('#' + tableId + ' tbody tr');
+    const result = [];
+    rows.forEach(r => {
+      const inputs = r.querySelectorAll('input');
+      result.push({
+        name: inputs[0].value,
+        type: inputs[1].value,
+        required: inputs[2].value,
+        desc: inputs[3].value
+      });
+    });
+    return result;
+  }
+
+  // 格式化 JSON：尝试解析并按 2 空格缩进美化输出，让每个字段独占一行
+  function formatJson(text) {
+    const raw = (text == null ? '' : String(text));
+    const trimmed = raw.trim();
+    if (!trimmed) return '';
+    try {
+      return JSON.stringify(JSON.parse(trimmed), null, 2);
+    } catch (e) {
+      return raw;
+    }
+  }
+
+  // 导出为 Excel
+  function exportToExcel() {
+    const data = [];
+
+    // 基本信息
+    data.push(['字段', '内容']);
+    data.push(['接口名称', document.getElementById('apiName').value]);
+    data.push(['说明',     document.getElementById('apiDesc').value]);
+    data.push(['备注',     document.getElementById('apiRemark').value]);
+    data.push(['接口地址', document.getElementById('apiUrl').value]);
+    data.push(['接口传递方向', document.getElementById('apiDirection').value]);
+    data.push(['接口调用方式', document.getElementById('apiMethod').value]);
+    data.push(['接口数据格式', 'JSON']);
+    data.push([]);
+
+    // 请求参数
+    data.push(['请求参数']);
+    data.push(['字段名称', '类型', '是否必填', '描述']);
+    collectFields('requestFields').forEach(f => {
+      data.push([f.name, f.type, f.required, f.desc]);
+    });
+    data.push([]);
+    const reqSampleRow = data.length;
+    data.push(['请求样例', formatJson(document.getElementById('requestSample').value)]);
+    data.push([]);
+
+    // 响应参数
+    data.push(['响应参数']);
+    data.push(['字段名称', '类型', '是否必填', '描述']);
+    collectFields('responseFields').forEach(f => {
+      data.push([f.name, f.type, f.required, f.desc]);
+    });
+    data.push([]);
+    const respSampleRow = data.length;
+    data.push(['响应样例', formatJson(document.getElementById('responseSample').value)]);
+
+    // 创建工作表
+    const ws = XLSX.utils.aoa_to_sheet(data);
+
+    // 设置列宽
+    ws['!cols'] = [
+      { wch: 18 },
+      { wch: 14 },
+      { wch: 12 },
+      { wch: 40 },
+      { wch: 50 }
+    ];
+
+    // 合并单元格
+    const merges = [];
+    const reqIdx   = data.findIndex(r => r[0] === '请求参数');
+    const respIdx  = data.findIndex(r => r[0] === '响应参数');
+    if (reqIdx  > -1) merges.push({ s: { r: reqIdx,  c: 0 }, e: { r: reqIdx,  c: 4 } });
+    if (respIdx > -1) merges.push({ s: { r: respIdx, c: 0 }, e: { r: respIdx, c: 4 } });
+    if (reqSampleRow  > -1) merges.push({ s: { r: reqSampleRow,  c: 1 }, e: { r: reqSampleRow,  c: 4 } });
+    if (respSampleRow > -1) merges.push({ s: { r: respSampleRow, c: 1 }, e: { r: respSampleRow, c: 4 } });
+    ws['!merges'] = merges;
+
+    // 为 JSON 样例单元格开启自动换行 + 顶部对齐，让每个字段独占一行清晰可见
+    const setWrap = (r) => {
+      const cellRef = XLSX.utils.encode_cell({ r, c: 1 });
+      if (ws[cellRef]) {
+        ws[cellRef].s = Object.assign({}, ws[cellRef].s, {
+          alignment: { wrapText: true, vertical: 'top' }
+        });
+      }
+    };
+    setWrap(reqSampleRow);
+    setWrap(respSampleRow);
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '接口信息');
+
+    const name = (document.getElementById('apiName').value || '接口信息').trim();
+    XLSX.writeFile(wb, name + '接口信息.xlsx');
+  }
+</script>
+
+</body>
+</html>
